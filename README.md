@@ -1,128 +1,176 @@
-🐍 Signal Snake Game — Enhanced MATLAB Sine-Wave Snake
+# 🐍 SignalSnake
 
-A keyboard-controlled, sine-wave “snake” game with smooth parameter interpolation, predictive path hints, animated food, and a clean HUD.
+> A MATLAB mini-game where you steer a **sine wave** through a 2D world to collect food — combining signal processing concepts with real-time gameplay.
 
-🔎 Overview
+![MATLAB](https://img.shields.io/badge/MATLAB-R2018a%2B-orange?logo=mathworks&logoColor=white)
+![License](https://img.shields.io/github/license/n00rtahsin/SignalSnake)
+![Language](https://img.shields.io/github/languages/top/n00rtahsin/SignalSnake)
 
-Signal Snake Game is a MATLAB mini-game where you steer a sine wave in real time to collect food. Tune Amplitude, Frequency, and Phase with fast/precise modifiers, watch a prediction line of your next path, and rack up a high score as difficulty gently scales.
+---
 
-✨ Features
+## 📖 Overview
 
-Tight controls: Arrow keys for primary control, WASD for fine control, Q/E for phase
+SignalSnake replaces the traditional snake with a **live sine wave** — your snake's shape is defined by amplitude, frequency, and phase, all of which you control in real time. Steer your wave into pulsing food targets, watch the difficulty scale up with each pickup, and enjoy a smooth 60 FPS experience complete with a predictive path line and live HUD.
 
-Smooth feel: Interpolated targets for amplitude & frequency (smoothing factor)
+It's part game, part signal-processing playground.
 
-Predictive line: See where the next segment of your sine wave will go
+---
 
-Animated food: Pulsing target with collision radius
+## ✨ Features
 
-HUD: Score, live parameter text, and colored parameter bars
+- **Sine-wave snake** — The snake body traces `A · sin(f·x + φ)`, updated live as you play
+- **Smooth parameter control** — Amplitude and frequency interpolate toward target values, eliminating jerky jumps
+- **Predictive path line** — A look-ahead trace shows where your wave will go next
+- **Animated food** — Pulsing target with configurable collision radius
+- **Live HUD** — Score, parameter readouts, and colored bars for amplitude/frequency/phase
+- **Progressive difficulty** — Speed gently ramps with each pickup (`× 1.005` per food)
+- **World wrapping & clamping** — Snake wraps on X axis, Y axis is bounded
+- **Pause / Reset / Help** — Full game flow controls
 
-Difficulty curve: Subtle speed ramp with each pickup
+---
 
-Pause/Reset/Help: SPACE, R, H for better gameplay flow
+## 🧰 Requirements
 
-Safe bounds & wrapping: Clean world wrapping on X, clamped Y
+| Requirement | Details |
+|---|---|
+| MATLAB | R2018a or newer |
+| Toolboxes | None — base MATLAB only |
+| OS | Windows, macOS, or Linux (any MATLAB-supported platform) |
+| Input | Keyboard (game window must have focus) |
 
-🧰 Requirements
+---
 
-MATLAB R2018a or newer (base MATLAB; no extra toolboxes required)
+## 🚀 Quick Start
 
-OS: Windows/macOS/Linux supported by MATLAB graphics
+1. Clone the repository:
 
-Keyboard input focus on the game window
+   ```bash
+   git clone https://github.com/n00rtahsin/SignalSnake.git
+   cd SignalSnake
+   ```
 
-🚀 Quick Start
+2. Open MATLAB and navigate to the project folder.
 
-Save the file as signalSnakeGame.m.
+3. Run the game:
 
-From MATLAB:
+   ```matlab
+   signalSnakeGame
+   ```
 
-signalSnakeGame
+4. Steer your sine wave into the red pulsing food. Score rises and speed increases with each pickup.
 
+---
 
-Collect the red pulsing food by steering your sine wave into it.
-Score increases and speed gently ramps with each pickup.
+## 🎮 Controls
 
-🎮 Controls
+### Parameter Controls
 
-Primary
+| Key | Action |
+|---|---|
+| `↑` / `↓` | Increase / decrease **Amplitude** |
+| `←` / `→` | Increase / decrease **Frequency** |
+| `Q` / `E` | Shift **Phase** left / right |
+| `W` / `S` | Fine **Amplitude** up / down |
+| `A` / `D` | Fine **Frequency** up / down |
 
-↑ / ↓ — Increase / decrease Amplitude
+### Modifiers
 
-← / → — Increase / decrease Frequency
+| Modifier | Effect |
+|---|---|
+| `SHIFT` | Fast adjustments (~3×) |
+| `CTRL` | Precision adjustments (~0.3×) |
 
-Q / E — Shift Phase left / right
+### Game Controls
 
-Fine Adjustments
+| Key | Action |
+|---|---|
+| `SPACE` | Pause / Resume |
+| `R` | Reset game (score, speed, parameters) |
+| `H` | Print help to Command Window |
+| `ESC` | Quit |
 
-W / S — Fine amplitude up / down
+---
 
-A / D — Fine frequency up / down
+## ⚙️ Configuration
 
-Modifiers
+All tunable parameters are defined at the top of `signalSnakeGame.m`:
 
-SHIFT — Fast adjustments (≈3×)
+| Parameter | Default | Description |
+|---|---|---|
+| `snakeLength` | `50` | Number of points in the snake body |
+| `A`, `f` | `1` | Initial amplitude and frequency |
+| `speed` | `0.1` | Base forward movement speed |
+| `foodRadius` | `0.3` | Collision radius for eating food |
+| `xRange` | `[0, 4π]` | Horizontal world bounds (wraps) |
+| `yRange` | `[-2.5, 2.5]` | Vertical bounds (clamped) |
+| `ampSensitivity` | `1.5` | Amplitude change rate (per second) |
+| `freqSensitivity` | `2.0` | Frequency change rate (per second) |
+| `phaseSensitivity` | `4.0` | Phase change rate (per second) |
+| `smoothing` | `0.85` | Interpolation factor for smooth control |
 
-CTRL — Precision adjustments (≈0.3×)
+**Tuning tips:**
+- Want snappier control? Lower `smoothing` (e.g., `0.75`–`0.80`)
+- Bigger arena? Expand `xRange` and increase `snakeLength` accordingly
+- More challenge? Raise `speed` or shrink `foodRadius`
 
-Game
+---
 
-SPACE — Pause / resume
+## 🧠 How It Works
 
-R — Reset game (score, speed, parameters)
+```
+Each frame (~60 FPS via tic/toc + drawnow limitrate):
 
-H — Print help in the Command Window
+  Key input → target A / f / phase
+       ↓
+  Smoothing: actual = actual + (1 - smoothing) × (target - actual)
+       ↓
+  Snake advances by `speed` in X
+  Y = A · sin(f · x + phase)   [clamped to yRange, wraps on xRange]
+       ↓
+  Prediction line plotted as a look-ahead segment
+       ↓
+  Collision: Euclidean distance to food < foodRadius → score++, speed × 1.005
+       ↓
+  HUD updated: score, parameter bars, snake color shift
+```
 
-ESC — Quit
+---
 
-⚙️ Tunable Parameters (top of the file)
-Name	Default	Purpose
-snakeLength	50	Number of points in the snake body
-A, f	1	Base amplitude/frequency (for init)
-speed	0.1	Forward movement speed (scales with score)
-foodRadius	0.3	Collision radius for eating food
-xRange	[0, 4*pi]	Horizontal world bounds (wraps)
-yRange	[-2.5, 2.5]	Vertical bounds (clamped)
-ampSensitivity	1.5	Amplitude change rate (per second)
-freqSensitivity	2.0	Frequency change rate (per second)
-phaseSensitivity	4.0	Phase change rate (per second)
-smoothing	0.85	Interpolation factor for smooth control
+## 📁 File Structure
 
-Tips
+```
+SignalSnake/
+├── signalSnakeGame.m   # Main game (recommended entry point)
+├── signalSnakeX.m      # Alternate / experimental variant
+├── snakess.m           # Earlier prototype
+├── LICENSE
+└── README.md
+```
 
-Want snappier control? Lower smoothing (e.g., 0.75–0.8).
+---
 
-Bigger arena? Expand xRange and adjust snakeLength accordingly.
+## 🧪 Troubleshooting
 
-More challenge? Increase speed or decrease foodRadius.
+| Issue | Solution |
+|---|---|
+| Keys not responding | Click the game figure window to give it keyboard focus |
+| Snake flickers | Close other MATLAB figures; reduce `snakeLength` |
+| Poor performance | Increase the loop `pause` duration slightly, or reduce `snakeLength` |
+| Too easy / too hard | Tune `speed`, `foodRadius`, and the sensitivity parameters |
+| Small HUD on high-DPI | Increase `'MarkerSize'` and `'FontSize'` values in the code |
 
-🧠 How It Works
+---
 
-Continuous loop updates at ~60 FPS target using tic/toc and drawnow limitrate.
+## 📄 License
 
-Keys set target values; actual userAmplitude/userFrequency smoothly track using smoothing.
+This project is licensed under the [MIT License](LICENSE).
 
-The snake advances in X by speed; Y is computed as A·sin(f·x + phase) and clamped.
+---
 
-Prediction line plots a short look-ahead to help you steer.
+## 🙌 Contributing
 
-Collision with food uses Euclidean distance < foodRadius.
+Contributions, issues, and feature requests are welcome! Feel free to open a [GitHub Issue](https://github.com/n00rtahsin/SignalSnake/issues) or submit a pull request.
 
-Each food increases score, nudges speed (×1.005), and subtly shifts snake color.
+---
 
-🧪 Known Behaviors & Tips
-
-Keyboard focus: Make sure the MATLAB figure window is active; otherwise key events won’t register.
-
-High-DPI displays: If markers/bars appear small, adjust 'MarkerSize' and text 'FontSize'.
-
-Performance: If you see stutter, reduce snakeLength, or slightly increase the pause in the loop.
-
-🧯 Troubleshooting
-
-No response to keys: Click the game window to focus it; confirm KeyPressFcn/KeyReleaseFcn are set (they are in the code).
-
-Snake flicker: Ensure you’re not running heavy background plots; try closing other figures.
-
-Too hard / too easy: Tweak speed, foodRadius, and/or sensitivities.
+*Built with MATLAB · Inspired by signal processing · Powered by sine waves*
